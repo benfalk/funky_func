@@ -61,12 +61,21 @@ defmodule FunkyFunc do
   end
 
   @doc """
+  """
+  defmacro package_funs(list) when is_list(list) do
+    list
+    |> Enum.map(fn {name, expr} -> def_string(name, expr) end)
+    |> Enum.join("\n")
+    |> Code.string_to_quoted!
+  end
+
+  @doc """
   Use this to escape an anon function if you want to expand it later
   with something like the `package_fun` macro.  Note that no scope
   follows this and as such will fail if you attempt to use it this
   way.
   """
-  defmacro escape_fun(expr) when quoted_fun?(expr) do
+  def escape_fun(expr) when quoted_fun?(expr) do
     escaped = do_escape(expr)
 
     quote do
@@ -78,7 +87,7 @@ defmodule FunkyFunc do
   Useful when you have a DSL in which keys may have anon functions
   on them.  This walks the keyword list and will escape them for you.
   """
-  defmacro escape_fun_list(list) when is_list(list) do
+  def escape_fun_list(list) when is_list(list) do
     new_list =
       for {name, expr} <- list do
         if quoted_fun?(expr) do
@@ -93,7 +102,15 @@ defmodule FunkyFunc do
     end
   end
 
-  defp do_package(name, {:escaped_fun, {func_str, arity}}) do
+  defp do_package(name, expr) when escaped_fun?(expr) do
+    def_string(name, expr) |> Code.string_to_quoted!
+  end
+
+  defp do_escape(expr) do
+    {:escaped_fun, {Macro.to_string(expr), arity(expr)}}
+  end
+
+  defp def_string(name, {:escaped_fun, {func_str, arity}}) do
     vars = 
       :lists.seq(1, arity)
       |> Enum.map(&("var#{&1}"))
@@ -102,11 +119,6 @@ defmodule FunkyFunc do
     """
     def #{name}(#{vars}), do: apply(#{func_str}, [#{vars}])
     """
-    |> Code.string_to_quoted!
-  end
-
-  defp do_escape(expr) do
-    {:escaped_fun, {Macro.to_string(expr), arity(expr)}}
   end
 
   defp arity(expr) do

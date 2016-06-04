@@ -35,10 +35,4 @@ defmodule FunkyFuncTest do
     assert Funk.alert == "me when ready!"
     assert Funk.tell("Ben", "it") == "Ben, you've done it!"
   end
-
-  test "#escape_fun_list" do
-    list = FunkyFunc.escape_fun_list(plus_one: &(&1 + 1), old: true)
-    assert list[:old] == true
-    assert list[:plus_one] == {:escaped_fun, {"&(&1 + 1)", 1}}
-  end
 end
