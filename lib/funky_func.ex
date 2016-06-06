@@ -102,6 +102,19 @@ defmodule FunkyFunc do
     end
   end
 
+  @doc """
+  Returns the arity of the given anon function, works with both
+  escaped and quoted versions.
+  """
+  def arity(expr) when quoted_fun?(expr) do
+    {func, []} = Code.eval_quoted(expr)
+    {:arity, arity} = :erlang.fun_info(func, :arity)
+    arity
+  end
+  def arity({:escaped_fun, {_, arity}}) when is_integer(arity) do
+    arity
+  end
+
   defp do_package(name, expr) when escaped_fun?(expr) do
     def_string(name, expr) |> Code.string_to_quoted!
   end
@@ -119,11 +132,5 @@ defmodule FunkyFunc do
     """
     def #{name}(#{vars}), do: apply(#{func_str}, [#{vars}])
     """
-  end
-
-  defp arity(expr) do
-    {func, []} = Code.eval_quoted(expr)
-    {:arity, arity} = :erlang.fun_info(func, :arity)
-    arity
   end
 end

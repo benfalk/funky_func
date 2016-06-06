@@ -35,4 +35,11 @@ defmodule FunkyFuncTest do
     assert Funk.alert == "me when ready!"
     assert Funk.tell("Ben", "it") == "Ben, you've done it!"
   end
+
+  test "#arity" do
+    assert FunkyFunc.arity(quote do: &(&1+1)) == 1
+
+    escaped = FunkyFunc.escape_fun(quote do: &(&1 * &2))
+    assert FunkyFunc.arity(escaped) == 2
+  end
 end
